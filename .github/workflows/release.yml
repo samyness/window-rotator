@@ -18,7 +18,7 @@ jobs:
       - name: Test & package (self-contained, single file)
         shell: pwsh
         run: ./build/publish.ps1
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           body_path: CHANGELOG.md
