@@ -1,0 +1,420 @@
+<Window x:Class="Fensterwechler.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Fensterwechler"
+        mc:Ignorable="d" d:DataContext="{d:DesignInstance local:MainViewModel}"
+        Style="{StaticResource {x:Type Window}}"
+        Title="Window Rotator" Icon="Assets/app.ico"
+        Width="1200" Height="780" MinWidth="940" MinHeight="580" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+        <local:PlusOneConverter x:Key="PlusOne" />
+        <local:NullToCollapsedConverter x:Key="NullToCollapsed" />
+    </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveProfileCommand}" />
+    </Window.InputBindings>
+
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" Height="4" Background="{StaticResource BrandBrush}" />
+                <Grid Margin="24,12">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="FENSTERWECHSLER" Foreground="{StaticResource BrandBrush}" FontWeight="Bold" FontSize="11" />
+                        <TextBlock Text="Window Rotator" FontSize="20" FontWeight="SemiBold" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock Text="Profil" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <ComboBox Width="220" ItemsSource="{Binding ProfileNames}" SelectedItem="{Binding SelectedProfileName}"
+                                  AutomationProperties.Name="Profil auswählen" ToolTip="Gespeichertes Profil laden" />
+                        <Button Content="Speichern" Margin="8,0,0,0" Command="{Binding SaveProfileCommand}" ToolTip="Profil speichern (Strg+S). Änderungen werden zusätzlich automatisch gespeichert." />
+                        <ToggleButton x:Name="SaveAsToggle" Margin="8,0,0,0" Padding="14,7" Content="Speichern unter …"
+                                      FontWeight="SemiBold" Background="White" BorderBrush="{StaticResource BorderStrongBrush}" Cursor="Hand" />
+                        <Popup IsOpen="{Binding IsChecked, ElementName=SaveAsToggle}" PlacementTarget="{Binding ElementName=SaveAsToggle}"
+                               Placement="Bottom" StaysOpen="False" AllowsTransparency="True" Opened="SaveAsPopup_Opened"
+                               Closed="SaveAsPopup_Closed">
+                            <Border Style="{StaticResource Card}" Width="300" Margin="0,4,8,8">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.18" />
+                                </Border.Effect>
+                                <StackPanel>
+                                    <TextBlock Text="Neuer Profilname" Style="{StaticResource Label}" />
+                                    <TextBox x:Name="NewProfileNameBox" Text="{Binding NewProfileName, UpdateSourceTrigger=PropertyChanged}"
+                                             AutomationProperties.Name="Neuer Profilname" KeyDown="NewProfileNameBox_KeyDown" />
+                                    <TextBlock Text="{Binding NewProfileNameError}" Foreground="{StaticResource BrandBrush}" FontSize="12"
+                                               TextWrapping="Wrap" Margin="0,4,0,0" Visibility="{Binding NewProfileNameError, Converter={StaticResource NullToCollapsed}}" />
+                                    <Button Content="Als Profil speichern" Style="{StaticResource PrimaryButton}" Margin="0,10,0,0"
+                                            HorizontalAlignment="Right" Command="{Binding SaveProfileAsCommand}" Click="SaveAs_Click" />
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+                        <Button Style="{StaticResource IconButton}" Content="&#xE74D;" FontSize="14" Margin="6,0,0,0"
+                                Command="{Binding DeleteProfileCommand}" ToolTip="Aktuelles Profil löschen" AutomationProperties.Name="Profil löschen" />
+                    </StackPanel>
+                </Grid>
+            </DockPanel>
+        </Border>
+
+        <!-- Action bar -->
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="24,12">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <Button Style="{StaticResource PrimaryButton}" Command="{Binding StartCommand}" MinWidth="110" ToolTip="Rotation starten">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="Start" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding PauseResumeCommand}" Margin="8,0,0,0" MinWidth="120">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE769;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding PauseResumeLabel}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding StopCommand}" Margin="8,0,0,0" ToolTip="Rotation beenden – das Programm bleibt aktiv">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="Stopp" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding NextCommand}" Margin="8,0,0,0" ToolTip="Sofort zum nächsten verfügbaren Fenster wechseln">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE893;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="Nächstes Fenster" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <StackPanel Margin="28,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{StaticResource BorderStrongBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                            <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                            <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                   AutomationProperties.LiveSetting="Polite" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding CountdownText}" Style="{StaticResource Muted}" Margin="18,2,0,0" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <TabControl Margin="16,4,16,12">
+            <!-- Rotation -->
+            <TabItem Header="Rotation">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="5*" MinWidth="320" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="7*" MinWidth="440" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Window library -->
+                    <Border Style="{StaticResource Card}">
+                        <DockPanel>
+                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                                <Button DockPanel.Dock="Right" Command="{Binding RefreshCommand}" ToolTip="Fensterliste aktualisieren (F5)" Padding="10,5">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <TextBlock Text="Aktualisieren" />
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="Geöffnete Fenster" Style="{StaticResource Heading}" />
+                            </DockPanel>
+                            <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Padding="28,6,6,6"
+                                         AutomationProperties.Name="Fenster suchen" />
+                                <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource MutedBrush}"
+                                           Margin="10,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
+                                <TextBlock Text="Titel oder Programm suchen …" Foreground="{StaticResource MutedBrush}" Margin="30,0,0,0"
+                                           VerticalAlignment="Center" IsHitTestVisible="False">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                            <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Muted}" Margin="0,8,0,0"
+                                       Text="Fenster per Drag-and-drop in die Rotation ziehen, doppelklicken oder mit + übernehmen." />
+                            <ListBox x:Name="LibraryList" Style="{StaticResource PlainList}" ItemsSource="{Binding LibraryView}"
+                                     SelectedItem="{Binding SelectedWindow}" AutomationProperties.Name="Geöffnete Fenster"
+                                     VirtualizingPanel.IsVirtualizing="True"
+                                     PreviewMouseLeftButtonDown="List_PreviewMouseLeftButtonDown" PreviewMouseMove="LibraryList_PreviewMouseMove"
+                                     MouseDoubleClick="LibraryList_MouseDoubleClick" KeyDown="LibraryList_KeyDown">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type local:WindowInfo}">
+                                        <Grid ToolTip="{Binding Title}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="30" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Image Source="{Binding Icon}" Width="20" Height="20" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding ProcessName}" Style="{StaticResource Muted}" TextWrapping="NoWrap" />
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE710;" Margin="6,0,0,0"
+                                                    Command="{Binding DataContext.AddCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                    CommandParameter="{Binding}" ToolTip="Zur Rotation hinzufügen"
+                                                    AutomationProperties.Name="Zur Rotation hinzufügen" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Rotation editor -->
+                    <Border Grid.Column="2" Style="{StaticResource Card}">
+                        <DockPanel>
+                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding CycleText}" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                                <TextBlock Text="Rotation" Style="{StaticResource Heading}" />
+                            </DockPanel>
+
+                            <!-- Details of the selected entry -->
+                            <Border DockPanel.Dock="Bottom" Margin="0,10,0,0" Padding="12" CornerRadius="4" Background="{StaticResource BackgroundBrush}"
+                                    Visibility="{Binding SelectedEntry, Converter={StaticResource NullToCollapsed}}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource Label}">
+                                            <Run Text="Titelfilter für" />
+                                            <Run Text="{Binding SelectedEntry.Title, Mode=OneWay}" />
+                                        </TextBlock>
+                                        <TextBox Text="{Binding SelectedEntry.TitleFilter}" AutomationProperties.Name="Titelfilter" MaxWidth="420" HorizontalAlignment="Left" Width="320" />
+                                        <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,0"
+                                                   Text="Optional: Nur Fenster, deren Titel diesen Text enthält. Empfohlen, wenn ein Programm mehrere Fenster hat (z. B. Edge, iVMS-4200)." />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" VerticalAlignment="Top" Margin="12,22,0,0" Command="{Binding AssignCommand}"
+                                            ToolTip="Den Eintrag mit dem links markierten Fenster verknüpfen (z. B. nach einem Programmneustart).">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <TextBlock Text="Markiertes Fenster zuordnen" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <Grid>
+                                <ListBox x:Name="RotationList" Style="{StaticResource PlainList}" ItemsSource="{Binding Entries}"
+                                         SelectedItem="{Binding SelectedEntry}" AllowDrop="True" AlternationCount="100000"
+                                         AutomationProperties.Name="Rotationsliste"
+                                         PreviewMouseLeftButtonDown="List_PreviewMouseLeftButtonDown" PreviewMouseMove="RotationList_PreviewMouseMove"
+                                         DragOver="RotationList_DragOver" DragLeave="RotationList_DragLeave" Drop="RotationList_Drop"
+                                         KeyDown="RotationList_KeyDown">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type local:RotationEntry}">
+                                            <Border x:Name="Row" BorderThickness="3,0,0,0" BorderBrush="Transparent" Padding="4,2,0,2">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="18" />
+                                                        <ColumnDefinition Width="26" />
+                                                        <ColumnDefinition Width="28" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="&#xE76F;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource BorderStrongBrush}"
+                                                               VerticalAlignment="Center" Cursor="SizeAll" ToolTip="Ziehen zum Sortieren" />
+                                                    <TextBlock Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" FontWeight="SemiBold"
+                                                               Text="{Binding (ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ListBoxItem}, Converter={StaticResource PlusOne}}" />
+                                                    <Image Grid.Column="2" Source="{Binding Icon}" Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                           RenderOptions.BitmapScalingMode="HighQuality" />
+                                                    <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}" />
+                                                        <TextBlock TextTrimming="CharacterEllipsis" FontSize="12">
+                                                            <Run Text="{Binding ProcessName, Mode=OneWay}" Foreground="{StaticResource MutedBrush}" />
+                                                            <Run Text="·" Foreground="{StaticResource MutedBrush}" />
+                                                            <Run x:Name="StatusRun" Text="{Binding Status, Mode=OneWay}" Foreground="{StaticResource MutedBrush}" />
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                        <TextBox Width="56" TextAlignment="Right"
+                                                                 Text="{Binding DurationSeconds, UpdateSourceTrigger=LostFocus, ValidatesOnExceptions=True}"
+                                                                 ToolTip="Anzeigedauer in Sekunden (3–3600)" AutomationProperties.Name="Anzeigedauer in Sekunden"
+                                                                 GotKeyboardFocus="DurationBox_GotKeyboardFocus" KeyDown="DurationBox_KeyDown" />
+                                                        <TextBlock Text="s" Margin="6,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" />
+                                                    </StackPanel>
+                                                    <CheckBox Grid.Column="5" Style="{StaticResource ToggleSwitch}" IsChecked="{Binding Enabled}" VerticalAlignment="Center"
+                                                              ToolTip="Eintrag aktiv / deaktiviert" AutomationProperties.Name="Eintrag aktiv" Margin="0,0,10,0" />
+                                                    <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <Button Style="{StaticResource IconButton}" Content="&#xE70E;" ToolTip="Nach oben" AutomationProperties.Name="Nach oben"
+                                                                Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" />
+                                                        <Button Style="{StaticResource IconButton}" Content="&#xE70D;" ToolTip="Nach unten" AutomationProperties.Name="Nach unten"
+                                                                Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" />
+                                                        <Button Style="{StaticResource IconButton}" Content="&#xE711;" ToolTip="Aus der Rotation entfernen" AutomationProperties.Name="Entfernen"
+                                                                Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                    <Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource BrandBrush}" />
+                                                    <Setter TargetName="StatusRun" Property="Foreground" Value="{StaticResource BrandBrush}" />
+                                                    <Setter TargetName="StatusRun" Property="FontWeight" Value="SemiBold" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Enabled}" Value="False">
+                                                    <Setter TargetName="Row" Property="Opacity" Value="0.5" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <!-- Empty state -->
+                                <Border BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1" CornerRadius="6" IsHitTestVisible="False"
+                                        Visibility="{Binding HasItems, ElementName=RotationList, Converter={StaticResource InverseBoolToVisibility}}">
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <TextBlock Text="&#xE8B9;" FontFamily="Segoe MDL2 Assets" FontSize="32" HorizontalAlignment="Center" Foreground="{StaticResource BorderStrongBrush}" />
+                                        <TextBlock Text="Fenster aus der Liste links hierher ziehen" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,10,0,2" />
+                                        <TextBlock Text="Reihenfolge per Drag-and-drop ändern · Dauer je Fenster in Sekunden" Style="{StaticResource Muted}" HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Drop position indicator -->
+                                <Canvas x:Name="DropCanvas" IsHitTestVisible="False">
+                                    <Border x:Name="DropLine" Height="2" Background="{StaticResource BrandBrush}" Visibility="Collapsed" />
+                                </Canvas>
+                            </Grid>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Settings -->
+            <TabItem Header="Einstellungen">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="760" HorizontalAlignment="Left">
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Heading}">
+                                    <Run Text="Profil" />
+                                    <Run Text="{Binding ProfileName, Mode=OneWay, StringFormat='„{0}“'}" />
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource Muted}" Margin="0,2,0,14" Text="Diese Optionen werden mit dem Profil gespeichert." />
+
+                                <TextBlock Text="Zielmonitor" Style="{StaticResource Label}" />
+                                <ComboBox ItemsSource="{Binding Monitors}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedMonitor}"
+                                          Width="360" HorizontalAlignment="Left" AutomationProperties.Name="Zielmonitor" />
+                                <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,14"
+                                           Text="Fenster werden vor dem Anzeigen auf diesen Monitor verschoben; Maximierung bleibt erhalten. Andere Monitore werden nicht verändert." />
+
+                                <TextBlock Text="Verhalten bei fehlgeschlagener Aktivierung" Style="{StaticResource Label}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <ComboBox ItemsSource="{Binding FailureStrategies}" DisplayMemberPath="Value" SelectedValuePath="Key"
+                                              SelectedValue="{Binding FailureStrategy}" Width="300" AutomationProperties.Name="Fehlerstrategie" />
+                                    <TextBlock Text="Versuche" VerticalAlignment="Center" Margin="16,0,8,0" />
+                                    <TextBox Width="48" TextAlignment="Right" Text="{Binding RetryCount, UpdateSourceTrigger=LostFocus, ValidatesOnExceptions=True}"
+                                             AutomationProperties.Name="Anzahl Wiederholungen" ToolTip="0–10 Wiederholungen im Abstand von 2 Sekunden" />
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource Muted}" Margin="0,4,0,14"
+                                           Text="Fehlende Fenster werden immer übersprungen und im nächsten Zyklus erneut gesucht." />
+
+                                <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding AltKeyFallback}"
+                                          Content="Windows-Fokussperre per ALT-Tastensignal umgehen" />
+                                <TextBlock Style="{StaticResource Muted}" Margin="46,2,0,0"
+                                           Text="Hilft, wenn Windows den Fensterwechsel verweigert. Deaktivieren, falls eine Anwendung auf die ALT-Taste reagiert." />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Programm" Style="{StaticResource Heading}" Margin="0,0,0,14" />
+                                <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding AutostartEnabled}"
+                                          Content="Bei Windows-Anmeldung automatisch starten (im Infobereich)" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding StartRotationOnLaunch}"
+                                          Content="Rotation beim Programmstart automatisch starten (zuletzt verwendetes Profil)" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding CloseToTray}"
+                                          Content="Beim Schließen des Fensters im Infobereich weiterlaufen" Margin="0,0,0,16" />
+                                <TextBlock Text="Protokollstufe" Style="{StaticResource Label}" />
+                                <ComboBox ItemsSource="{Binding LogLevels}" SelectedItem="{Binding LogLevel}" Width="160" HorizontalAlignment="Left"
+                                          AutomationProperties.Name="Protokollstufe" />
+                                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                    <Button Content="Protokollordner öffnen" Command="{Binding OpenFolderCommand}" CommandParameter="logs" />
+                                    <Button Content="Profilordner öffnen" Command="{Binding OpenFolderCommand}" Margin="8,0,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock x:Name="VersionText" Style="{StaticResource Muted}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Log -->
+            <TabItem Header="Protokoll">
+                <Border Style="{StaticResource Card}">
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button Content="Ordner öffnen" Command="{Binding OpenFolderCommand}" CommandParameter="logs" />
+                                <Button Content="Anzeige leeren" Command="{Binding ClearLogCommand}" Margin="8,0,0,0" />
+                            </StackPanel>
+                            <TextBlock Text="Ereignisprotokoll" Style="{StaticResource Heading}" />
+                        </DockPanel>
+                        <ListBox ItemsSource="{Binding LogEntries}" Style="{StaticResource PlainList}" FontFamily="Consolas" FontSize="12"
+                                 VirtualizingPanel.IsVirtualizing="True" AutomationProperties.Name="Ereignisprotokoll">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource RowItem}">
+                                    <Setter Property="Padding" Value="6,2" />
+                                    <Setter Property="Margin" Value="0" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type local:LogEntry}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="150" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Time, StringFormat='dd.MM.yyyy HH:mm:ss'}" Foreground="{StaticResource MutedBrush}" />
+                                        <TextBlock x:Name="LevelText" Grid.Column="1" Text="{Binding Level}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Message}" TextWrapping="Wrap" />
+                                    </Grid>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Level}" Value="Warning">
+                                            <Setter TargetName="LevelText" Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Level}" Value="Error">
+                                            <Setter TargetName="LevelText" Property="Foreground" Value="{StaticResource BrandBrush}" />
+                                            <Setter TargetName="LevelText" Property="FontWeight" Value="Bold" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

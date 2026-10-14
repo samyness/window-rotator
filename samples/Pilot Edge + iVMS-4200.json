@@ -1,0 +1,28 @@
+{
+  "SchemaVersion": 1,
+  "Name": "Pilot Edge + iVMS-4200",
+  "TargetMonitor": null,
+  "FailureStrategy": "RetryThenSkip",
+  "RetryCount": 2,
+  "AltKeyFallback": true,
+  "Entries": [
+    {
+      "Title": "Produktionsdashboard - Microsoft Edge",
+      "TitleFilter": "Dashboard",
+      "ProcessName": "msedge.exe",
+      "ProcessPath": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "ClassName": "Chrome_WidgetWin_1",
+      "DurationSeconds": 30,
+      "Enabled": true
+    },
+    {
+      "Title": "iVMS-4200",
+      "TitleFilter": null,
+      "ProcessName": "iVMS-4200.Framework.C.exe",
+      "ProcessPath": null,
+      "ClassName": "",
+      "DurationSeconds": 15,
+      "Enabled": true
+    }
+  ]
+}

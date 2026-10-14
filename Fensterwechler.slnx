@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Fensterwechler/Fensterwechler.csproj" />
+  <Project Path="Fensterwechler.Tests/Fensterwechler.Tests.csproj" />
+</Solution>

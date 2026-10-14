@@ -1,0 +1,27 @@
+name: 🐛 Bug report
+description: Something doesn't rotate the way it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, what did you get?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Add Edge + … 2. Start rotation 3. …"
+  - type: input
+    id: version
+    attributes:
+      label: Window Rotator version / Windows version
+      placeholder: "1.0.0 / Windows 11 24H2"
+  - type: textarea
+    id: log
+    attributes:
+      label: Log excerpt
+      description: From %LOCALAPPDATA%\WindowRotator\logs — please remove window titles you don't want to share.
+      render: text
